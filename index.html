@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ROZPIERDOL W WALENCJI 🌞🍊</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+  <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBuAItM0qA6D_MkrK7dxgEmOzQVMjtz7J4",
+  authDomain: "kreta-2208b.firebaseapp.com",
+  databaseURL: "https://kreta-2208b-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kreta-2208b",
+  storageBucket: "kreta-2208b.firebasestorage.app",
+  messagingSenderId: "644829928706",
+  appId: "1:644829928706:web:1e8b43d96d152b6837f61b",
+  measurementId: "G-77YZPTBL43"
+};
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+</script>
+  
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Comic Sans MS', cursive;
+      overflow-x: hidden;
+      color: white;
+      text-align: center;
+      height: 100vh;
+      /* TWOJE TŁO */
+      background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), 
+                  url('https://i.ibb.co/VYNBbF7f/Bez-tytu-u.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .content-wrapper {
+      background: rgba(0, 0, 0, 0.5);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-top: 40px;
+      text-shadow: 2px 2px 8px black;
+      animation: neon 2s infinite alternate;
+      color: #ffde59;
+    }
+
+    @keyframes neon {
+      from {
+        text-shadow: 0 0 10px #fff, 0 0 20px #ffde59, 0 0 30px #ff8c00;
+      }
+      to {
+        text-shadow: 0 0 5px #fff, 0 0 10px #ffde59, 0 0 15px #ff8c00;
+      }
+    }
+
+    #countdown {
+      font-size: 2em;
+      margin: 20px 0;
+      text-shadow: 1px 1px 3px #000;
+      color: #ffde59;
+    }
+
+    #factBox {
+      margin: 20px auto;
+      font-size: 1.3em;
+      background: rgba(255, 222, 89, 0.2);
+      padding: 15px;
+      border-radius: 12px;
+      display: inline-block;
+      max-width: 80%;
+      backdrop-filter: blur(5px);
+      border: 2px solid #ffde59;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 12px 25px;
+      border: none;
+      background-color: #ffde59;
+      color: #333;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: all 0.2s ease;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #ff8c00;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    button:active {
+      transform: scale(0.98);
+      box-shadow: 0 0 20px #ffde59;
+    }
+
+    .firework, .explosion {
+      position: fixed;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #ffde59;
+      box-shadow: 0 0 15px #ff8c00;
+      animation: explode 1s ease-out forwards;
+      z-index: 999;
+    }
+
+    @keyframes explode {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(20); opacity: 0; }
+    }
+
+    .orange, .paella {
+      position: fixed;
+      bottom: -50px;
+      font-size: 2em;
+      animation: floatUp 10s linear forwards;
+      z-index: 999;
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .paella {
+      font-size: 1.8em;
+    }
+
+    @keyframes floatUp {
+      0% { transform: translateY(0); opacity: 1; }
+      100% { transform: translateY(-100vh); opacity: 0; }
+    }
+
+    .sangria {
+      position: fixed;
+      top: -50px;
+      font-size: 2em;
+      transform: rotate(0deg);
+      animation: dropSangria 5s linear forwards;
+      pointer-events: none;
+      z-index: 998;
+    }
+
+    @keyframes dropSangria {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(110vh) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    #tictactoeContainer {
+      margin: 30px auto;
+      padding: 20px;
+      background: rgba(255, 222, 89, 0.1);
+      border-radius: 15px;
+      max-width: 500px;
+      backdrop-filter: blur(5px);
+      border: 2px solid #ffde59;
+    }
+
+    #tictactoeBoard {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-gap: 10px;
+      margin: 20px auto;
+      max-width: 300px;
+    }
+
+    .tictactoe-cell {
+      aspect-ratio: 1;
+      background: rgba(255, 222, 89, 0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      overflow: hidden;
+      border: 1px solid #ffde59;
+    }
+
+    .tictactoe-cell:hover {
+      background: rgba(255, 222, 89, 0.3);
+      transform: scale(1.05);
+    }
+
+    .cell-image {
+      width: 80%;
+      height: 80%;
+      object-fit: contain;
+      border-radius: 5px;
+    }
+
+    #tictactoeMessage {
+      font-size: 1.2em;
+      margin: 15px 0;
+      min-height: 30px;
+      font-weight: bold;
+      color: #ffde59;
+    }
+
+    #startTicTacToe {
+      background: #ff8c00;
+      color: white;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="content-wrapper">
+    <h1>Rozpierdol w Walencji 🌞🍊</h1>
+    <div id="countdown">Liczymy dni do wyjazdu..</div>
+
+    <div id="factBox">Kliknij przycisk, żeby poznać ciekawostkę o Walencji!</div><br>
+    <button onclick="showFact()">🎓 Pokaż ciekawostkę</button>
+
+    <div id="tictactoeContainer">
+      <button id="startTicTacToe">🎮 Start Kółko i Krzyżyk</button>
+      <div id="tictactoeMessage">Kliknij START aby zagrać!</div>
+      <div id="tictactoeBoard"></div>
+    </div>
+
+    <audio autoplay loop>
+      <source src="nutka.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+      const endDate = new Date("2026-01-31T23:59:59").getTime();
+      const countdownEl = document.getElementById("countdown");
+
+      setInterval(() => {
+        const now = new Date().getTime();
+        const distance = endDate - now;
+
+        const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        countdownEl.innerHTML = `Zostało nam jeszcze: ${days} dni, ${hours}h ${minutes}m ${seconds}s`;
+      }, 1000);
+
+      const facts = [
+        "Walencja jest trzecim co do wielkości miastem w Hiszpanii, zaraz po Madrycie i Barcelonie! 🏙️",
+        "Walencja słynie z Fallas - festiwalu, podczas którego tworzy się ogromne rzeźby, a potem się je pali! 🔥",
+        "W Walencji narodziło się słynne hiszpańskie danie - paella! 🥘",
+        "Miasto ma własną rzekę, która została zamieniona w piękny park - Jardín del Turia! 🌳",
+        "Oceanografic w Walencji to największe oceanarium w Europie! 🐠",
+        "Walencja ma ponad 300 słonecznych dni w roku! ☀️",
+        "Tutaj produkuje się słynny napój orszadowy - horchata! 🥤",
+        "Stadion Mestalla to jeden z najstarszych still działających stadionów piłkarskich w Hiszpanii! ⚽",
+        "Walencja ma własny język - walencki, który jest odmianą katalońskiego! 💬",
+        "Miasto słynie z futurystycznego kompleksu Ciudad de las Artes y las Ciencias! 🏛️",
+        "W Walencji jeździ najstarsza linia metra w Hiszpanii! 🚇",
+        "Lonja de la Seda (Giełda Jedwabiu) jest wpisana na listę UNESCO! 🏰",
+        "Tutaj odbywa się słynny festiwal muzyczny - Festival de Benicàssim! 🎵",
+        "Walencja ma największe centrum miejskie w Europie bez ruchu samochodowego! 🚶‍♂️",
+        "Tutaj narodził się słynny autor Santiago Calatrava - architekt wielu ikonicznych budynków! 🏗️"
+      ];
+
+      function showFact() {
+        const factBox = document.getElementById("factBox");
+        const randomFact = facts[Math.floor(Math.random() * facts.length)];
+        factBox.textContent = randomFact;
+        triggerExplosion();
+      }
+
+      function triggerExplosion() {
+        const explosion = document.createElement("div");
+        explosion.className = "explosion";
+        explosion.style.left = (window.innerWidth / 2 - 5) + "px";
+        explosion.style.top = (window.innerHeight / 2 - 5) + "px";
+        document.body.appendChild(explosion);
+        setTimeout(() => explosion.remove(), 1000);
+      }
+
+      setInterval(() => {
+        const orange = document.createElement("div");
+        orange.classList.add("orange");
+        orange.style.left = Math.random() * 100 + "vw";
+        orange.textContent = "🍊";
+        document.body.appendChild(orange);
+        setTimeout(() => orange.remove(), 10000);
+      }, 3000);
+
+      setInterval(() => {
+        const paella = document.createElement("div");
+        paella.classList.add("paella");
+        paella.style.left = Math.random() * 100 + "vw";
+        paella.textContent = "🥘";
+        document.body.appendChild(paella);
+        setTimeout(() => paella.remove(), 10000);
+      }, 4000);
+
+      setInterval(() => {
+        const sangria = document.createElement("div");
+        sangria.classList.add("sangria");
+        sangria.style.left = Math.random() * 100 + "vw";
+        sangria.textContent = "🍷";
+        document.body.appendChild(sangria);
+        setTimeout(() => sangria.remove(), 5000);
+      }, 8000);
+
+      const tictactoeBoard = document.getElementById('tictactoeBoard');
+      const tictactoeMessage = document.getElementById('tictactoeMessage');
+      const startTicTacToeBtn = document.getElementById('startTicTacToe');
+
+      let currentPlayer = 'player';
+      let gameBoard = ['', '', '', '', '', '', '', '', ''];
+      let gameActive = false;
+      let gameCounter = 0; // Licznik gier
+
+      const playerImage = 'https://i.ibb.co/4wRSt81H/zdjecie.jpg';
+      const computerImage = 'https://i.ibb.co/JFmT4P74/piwo.jpg';
+
+      const winningConditions = [
+        [0, 1, 2], [3, 4, 5], [6, 7, 8],
+        [0, 3, 6], [1, 4, 7], [2, 5, 8],
+        [0, 4, 8], [2, 4, 6]
+      ];
+
+      function startTicTacToe() {
+        gameBoard = ['', '', '', '', '', '', '', '', ''];
+        gameActive = true;
+        gameCounter++; // Zwiększ licznik gier
+        
+        // PIERWSZA GRA - Ty zaczynasz, POTEM NA ZMIANĘ
+        if (gameCounter === 1) {
+          currentPlayer = 'player';
+          tictactoeMessage.textContent = 'Twój ruch! Zaczynasz pierwszą grę!';
+        } else {
+          // Na zmianę: parzyste gry - komputer, nieparzyste - gracz
+          if (gameCounter % 2 === 0) {
+            currentPlayer = 'computer';
+            tictactoeMessage.textContent = 'Komputer zaczyna! Czekaj...';
+            // Komputer wykonuje pierwszy ruch
+            setTimeout(computerFirstMove, 1000);
+          } else {
+            currentPlayer = 'player';
+            tictactoeMessage.textContent = 'Twój ruch! Zaczynasz!';
+          }
+        }
+        
+        renderBoard();
+      }
+
+      function computerFirstMove() {
+        if (!gameActive) return;
+        
+        const emptyCells = gameBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        
+        gameBoard[randomIndex] = 'computer';
+        renderBoard();
+        
+        currentPlayer = 'player';
+        tictactoeMessage.textContent = 'Twój ruch!';
+      }
+
+      function renderBoard() {
+        tictactoeBoard.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'tictactoe-cell';
+          cell.dataset.index = i;
+          
+          if (gameBoard[i] === 'player') {
+            const img = document.createElement('img');
+            img.src = playerImage;
+            img.className = 'cell-image';
+            img.alt = 'Gracz';
+            cell.appendChild(img);
+          } else if (gameBoard[i] === 'computer') {
+            const img = document.createElement('img');
+            img.src = computerImage;
+            img.className = 'cell-image';
+            img.alt = 'Piwo';
+            cell.appendChild(img);
+          }
+          
+          cell.addEventListener('click', () => handleCellClick(i));
+          tictactoeBoard.appendChild(cell);
+        }
+      }
+
+      function handleCellClick(index) {
+        if (!gameActive || gameBoard[index] !== '' || currentPlayer !== 'player') {
+          return;
+        }
+
+        gameBoard[index] = 'player';
+        renderBoard();
+
+        if (checkWinner()) {
+          tictactoeMessage.innerHTML = '🎉 <strong>Wygrałeś! Pysio wisi mi 50 euro! 🎉</strong>';
+          gameActive = false;
+          triggerExplosion();
+          return;
+        }
+
+        if (isBoardFull()) {
+          tictactoeMessage.textContent = 'Remis! Spróbuj jeszcze raz.';
+          gameActive = false;
+          return;
+        }
+
+        currentPlayer = 'computer';
+        tictactoeMessage.textContent = 'Ruch piwa...';
+        
+        setTimeout(() => {
+          if (!gameActive) return;
+          
+          const emptyCells = gameBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+          const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+          
+          gameBoard[randomIndex] = 'computer';
+          renderBoard();
+
+          if (checkWinner()) {
+            tictactoeMessage.innerHTML = '💀 <strong>Przegrałeś! Piwo wygrało! 💀</strong>';
+            gameActive = false;
+            return;
+          }
+
+          if (isBoardFull()) {
+            tictactoeMessage.textContent = 'Remis! Spróbuj jeszcze raz.';
+            gameActive = false;
+            return;
+          }
+
+          currentPlayer = 'player';
+          tictactoeMessage.textContent = 'Twój ruch!';
+        }, 1000);
+      }
+
+      function checkWinner() {
+        for (let condition of winningConditions) {
+          const [a, b, c] = condition;
+          if (gameBoard[a] && gameBoard[a] === gameBoard[b] && gameBoard[a] === gameBoard[c]) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      function isBoardFull() {
+        return gameBoard.every(cell => cell !== '');
+      }
+
+      startTicTacToeBtn.addEventListener('click', startTicTacToe);
+      renderBoard();
+    </script>
+  </div>
+</body>
+</html>
