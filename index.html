@@ -696,7 +696,7 @@
         if (checkWinner()) {
           const winner = currentPlayer;
           const winText = getGenderEnding(winner, 'win');
-          tictactoeMessage.innerHTML = `🎉 <strong>${winner.name} ${winText}! Pysio wisi mi 50 euro! 🎉</strong>`;
+          tictactoeMessage.innerHTML = `🎉 <strong>${winner.name} ${winText}! 🎉</strong>`;
           gameActive = false;
           triggerExplosion();
           return;
@@ -742,7 +742,7 @@
           }
 
           if (isBoardFull()) {
-            tictactoeMessage.textContent = 'Remis! Nikt nie wygrał 50 euro!';
+            tictactoeMessage.textContent = 'Remis! Nudy';
             gameActive = false;
             isComputerThinking = false;
             return;
