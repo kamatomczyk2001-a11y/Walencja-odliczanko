@@ -521,8 +521,8 @@
         isComputerThinking = false;
         currentPlayer = null;
         
-        // Wyczyść planszę
-        renderBoard();
+        // Wyczyść planszę - TERAZ ZAWSZE CZYŚCI
+        renderEmptyBoard();
         
         // Wyczyść informacje o graczach
         player1InfoEl.innerHTML = '';
@@ -534,6 +534,18 @@
         
         // Wyczyść komunikaty
         tictactoeMessage.textContent = 'Wybierz graczy i zacznij grę!';
+      }
+
+      // NOWA FUNKCJA - CZYŚCI PLANSZĘ (puste pola)
+      function renderEmptyBoard() {
+        tictactoeBoard.innerHTML = '';
+        for (let i = 0; i < 9; i++) {
+          const cell = document.createElement('div');
+          cell.className = 'tictactoe-cell';
+          cell.dataset.index = i;
+          cell.addEventListener('click', () => handleCellClick(i));
+          tictactoeBoard.appendChild(cell);
+        }
       }
 
       function getPlayerByName(name) {
@@ -556,6 +568,9 @@
       }
 
       function startTicTacToe() {
+        // NAJWAŻNIEJSZA ZMIANA - RESET PRZED KAŻDĄ NOWĄ GRĄ
+        resetGame();
+        
         let player1Name, player2Name;
         
         if (gameMode === 'computer') {
@@ -763,6 +778,7 @@
 
       // Inicjalizacja
       populatePlayerSelects();
+      renderEmptyBoard(); // POCZĄTKOWO PUSTA PLANSZA
     </script>
   </div>
 </body>
