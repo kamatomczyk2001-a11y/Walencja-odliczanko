@@ -247,6 +247,12 @@
       color: #333;
       font-weight: bold;
     }
+
+    .vs-computer {
+      color: #ff8c00;
+      font-weight: bold;
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -265,14 +271,26 @@
       </div>
 
       <div id="playerSelection" style="display: none;">
-        <div class="player-select">
-          <select id="player1Select">
-            <option value="">Wybierz gracza 1</option>
-          </select>
-          <select id="player2Select">
-            <option value="">Wybierz gracza 2</option>
-          </select>
+        <div id="humanSelection" style="display: none;">
+          <div class="player-select">
+            <select id="player1Select">
+              <option value="">Wybierz gracza 1</option>
+            </select>
+            <select id="player2Select">
+              <option value="">Wybierz gracza 2</option>
+            </select>
+          </div>
         </div>
+        
+        <div id="computerSelection" style="display: none;">
+          <div class="vs-computer">Wybierz gracza przeciwko komputerowi:</div>
+          <div class="player-select">
+            <select id="playerVsComputer">
+              <option value="">Wybierz gracza</option>
+            </select>
+          </div>
+        </div>
+        
         <button id="startTicTacToe">🎮 Start Gry</button>
       </div>
 
@@ -388,8 +406,11 @@
       const player2InfoEl = document.getElementById('player2Info');
       const startTicTacToeBtn = document.getElementById('startTicTacToe');
       const playerSelectionDiv = document.getElementById('playerSelection');
+      const humanSelectionDiv = document.getElementById('humanSelection');
+      const computerSelectionDiv = document.getElementById('computerSelection');
       const player1Select = document.getElementById('player1Select');
       const player2Select = document.getElementById('player2Select');
+      const playerVsComputer = document.getElementById('playerVsComputer');
 
       let gameMode = null;
       let player1 = null;
@@ -397,6 +418,7 @@
       let currentPlayer = null;
       let gameBoard = ['', '', '', '', '', '', '', '', ''];
       let gameActive = false;
+      let isComputerThinking = false; // BLOKADA podczas ruchu komputera
 
       const winningConditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -404,13 +426,20 @@
         [0, 4, 8], [2, 4, 6]
       ];
 
-      // Wypełnij selecty graczami
+      // Wypełnij selecty graczami (TYLKO RAZ)
       function populatePlayerSelects() {
+        // Wyczyść selecty przed wypełnieniem
+        player1Select.innerHTML = '<option value="">Wybierz gracza 1</option>';
+        player2Select.innerHTML = '<option value="">Wybierz gracza 2</option>';
+        playerVsComputer.innerHTML = '<option value="">Wybierz gracza</option>';
+        
         players.forEach(player => {
           const option1 = new Option(player.name, player.name);
           const option2 = new Option(player.name, player.name);
+          const option3 = new Option(player.name, player.name);
           player1Select.add(option1);
           player2Select.add(option2);
+          playerVsComputer.add(option3);
         });
       }
 
@@ -418,12 +447,24 @@
         gameMode = mode;
         playerSelectionDiv.style.display = 'block';
         
+        // Wyczyść poprzednie wybory
+        player1Select.value = '';
+        player2Select.value = '';
+        playerVsComputer.value = '';
+        
         if (mode === 'computer') {
-          player2Select.innerHTML = '<option value="computer">Komputer</option>';
+          humanSelectionDiv.style.display = 'none';
+          computerSelectionDiv.style.display = 'block';
           tictactoeMessage.textContent = 'Wybierz gracza i zacznij grę z komputerem!';
         } else {
-          populatePlayerSelects();
+          humanSelectionDiv.style.display = 'block';
+          computerSelectionDiv.style.display = 'none';
           tictactoeMessage.textContent = 'Wybierz dwóch graczy i zacznij grę!';
+        }
+        
+        // Wypełnij selecty tylko raz
+        if (player1Select.options.length <= 1) {
+          populatePlayerSelects();
         }
       }
 
@@ -441,22 +482,30 @@
       }
 
       function startTicTacToe() {
-        const player1Name = player1Select.value;
-        const player2Name = player2Select.value;
+        let player1Name, player2Name;
+        
+        if (gameMode === 'computer') {
+          player1Name = playerVsComputer.value;
+          player2Name = 'computer';
+        } else {
+          player1Name = player1Select.value;
+          player2Name = player2Select.value;
+        }
         
         if (!player1Name || !player2Name) {
-          tictactoeMessage.textContent = 'Wybierz obu graczy!';
+          tictactoeMessage.textContent = 'Wybierz graczy!';
           return;
         }
 
         player1 = getPlayerByName(player1Name);
         player2 = getPlayerByName(player2Name);
 
-        // Gracz 1 zaczyna
+        // Gracz 1 zawsze zaczyna
         currentPlayer = player1;
 
         gameBoard = ['', '', '', '', '', '', '', '', ''];
         gameActive = true;
+        isComputerThinking = false;
         
         // Pokaz kto gra
         currentPlayersEl.innerHTML = `🎮 <strong>${player1.name}</strong> vs <strong>${player2.name}</strong>`;
@@ -524,7 +573,8 @@
       }
 
       function handleCellClick(index) {
-        if (!gameActive || gameBoard[index] !== '') {
+        // BLOKADA podczas ruchu komputera lub gry nieaktywnej
+        if (!gameActive || gameBoard[index] !== '' || isComputerThinking) {
           return;
         }
 
@@ -557,10 +607,11 @@
         // Zmiana gracza
         currentPlayer = (currentPlayer === player1) ? player2 : player1;
         
-        // Jeśli to komputer, wykonaj jego ruch
+        // Jeśli to komputer, wykonaj jego ruch (BLOKADA żeby gracz nie mógł kliknąć)
         if (gameMode === 'computer' && currentPlayer.name === 'Komputer') {
+          isComputerThinking = true;
           tictactoeMessage.textContent = 'Komputer myśli...';
-          setTimeout(computerMove, 1000);
+          setTimeout(computerMove, 500); // SZYBCIEJ - 0.5 sekundy
         } else {
           tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
           updatePlayerCards();
@@ -571,30 +622,36 @@
         if (!gameActive) return;
         
         const emptyCells = gameBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
-        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
         
-        gameBoard[randomIndex] = 'player2';
-        renderBoard();
+        if (emptyCells.length > 0) {
+          const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+          gameBoard[randomIndex] = 'player2';
+          renderBoard();
 
-        // Sprawdź czy komputer wygrał
-        if (checkWinner()) {
-          const loseText = getGenderEnding(player1, 'lose');
-          tictactoeMessage.innerHTML = `💀 <strong>${player1.name} ${loseText}! Komputer wygrał! 💀</strong>`;
-          gameActive = false;
-          return;
+          // Sprawdź czy komputer wygrał
+          if (checkWinner()) {
+            const loseText = getGenderEnding(player1, 'lose');
+            tictactoeMessage.innerHTML = `💀 <strong>${player1.name} ${loseText}! Komputer wygrał! 💀</strong>`;
+            gameActive = false;
+            isComputerThinking = false;
+            return;
+          }
+
+          // Sprawdź remis
+          if (isBoardFull()) {
+            tictactoeMessage.textContent = 'Remis! Nikt nie wygrał 50 euro!';
+            gameActive = false;
+            isComputerThinking = false;
+            return;
+          }
+
+          // Zmiana na gracza
+          currentPlayer = player1;
+          tictactoeMessage.textContent = `Twój ruch ${player1.name}!`;
+          updatePlayerCards();
         }
-
-        // Sprawdź remis
-        if (isBoardFull()) {
-          tictactoeMessage.textContent = 'Remis! Nikt nie wygrał 50 euro!';
-          gameActive = false;
-          return;
-        }
-
-        // Zmiana na gracza
-        currentPlayer = player1;
-        tictactoeMessage.textContent = `Twój ruch ${player1.name}!`;
-        updatePlayerCards();
+        
+        isComputerThinking = false; // OD-BLOKADA
       }
 
       function checkWinner() {
@@ -612,17 +669,9 @@
       }
 
       startTicTacToeBtn.addEventListener('click', startTicTacToe);
-      renderBoard();
 
-      // DODAJ ZASTĘPCZE ZDJĘCIA GDY ORGINAŁ SIĘ NIE WCZYTA
-      function addImageFallbacks() {
-        const images = document.querySelectorAll('.cell-image');
-        images.forEach(img => {
-          img.onerror = function() {
-            this.src = 'https://via.placeholder.com/100/667eea/ffffff?text=?';
-          };
-        });
-      }
+      // Inicjalizacja - wypełnij selecty na start
+      populatePlayerSelects();
     </script>
   </div>
 </body>
