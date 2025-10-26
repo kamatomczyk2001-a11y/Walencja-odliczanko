@@ -418,7 +418,7 @@
       let currentPlayer = null;
       let gameBoard = ['', '', '', '', '', '', '', '', ''];
       let gameActive = false;
-      let isComputerThinking = false; // BLOKADA podczas ruchu komputera
+      let isComputerThinking = false;
 
       const winningConditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -428,7 +428,6 @@
 
       // Wypełnij selecty graczami (TYLKO RAZ)
       function populatePlayerSelects() {
-        // Wyczyść selecty przed wypełnieniem
         player1Select.innerHTML = '<option value="">Wybierz gracza 1</option>';
         player2Select.innerHTML = '<option value="">Wybierz gracza 2</option>';
         playerVsComputer.innerHTML = '<option value="">Wybierz gracza</option>';
@@ -443,7 +442,44 @@
         });
       }
 
+      // AUTOMATYCZNA AKTUALIZACJA SELECTÓW - nie można wybrać tej samej osoby
+      function updatePlayerSelects() {
+        const player1Value = player1Select.value;
+        const player2Value = player2Select.value;
+        
+        // Aktualizuj player2Select - usuń gracza wybranego w player1Select
+        player2Select.innerHTML = '<option value="">Wybierz gracza 2</option>';
+        players.forEach(player => {
+          if (player.name !== player1Value) {
+            const option = new Option(player.name, player.name);
+            player2Select.add(option);
+          }
+        });
+        if (player2Value && player2Value !== player1Value) {
+          player2Select.value = player2Value;
+        } else {
+          player2Select.value = '';
+        }
+        
+        // Aktualizuj player1Select - usuń gracza wybranego w player2Select
+        player1Select.innerHTML = '<option value="">Wybierz gracza 1</option>';
+        players.forEach(player => {
+          if (player.name !== player2Value) {
+            const option = new Option(player.name, player.name);
+            player1Select.add(option);
+          }
+        });
+        if (player1Value && player1Value !== player2Value) {
+          player1Select.value = player1Value;
+        } else {
+          player1Select.value = '';
+        }
+      }
+
       function setGameMode(mode) {
+        // RESET GRY przy zmianie trybu
+        resetGame();
+        
         gameMode = mode;
         playerSelectionDiv.style.display = 'block';
         
@@ -460,12 +496,29 @@
           humanSelectionDiv.style.display = 'block';
           computerSelectionDiv.style.display = 'none';
           tictactoeMessage.textContent = 'Wybierz dwóch graczy i zacznij grę!';
-        }
-        
-        // Wypełnij selecty tylko raz
-        if (player1Select.options.length <= 1) {
+          // Wypełnij selecty dla trybu 2 graczy
           populatePlayerSelects();
         }
+      }
+
+      function resetGame() {
+        gameBoard = ['', '', '', '', '', '', '', '', ''];
+        gameActive = false;
+        isComputerThinking = false;
+        currentPlayer = null;
+        
+        // Wyczyść planszę
+        renderBoard();
+        
+        // Wyczyść informacje o graczach
+        player1InfoEl.innerHTML = '';
+        player2InfoEl.innerHTML = '';
+        player1InfoEl.classList.remove('active');
+        player2InfoEl.classList.remove('active');
+        currentPlayersEl.innerHTML = '';
+        
+        // Wyczyść komunikaty
+        tictactoeMessage.textContent = 'Wybierz graczy i zacznij grę!';
       }
 
       function getPlayerByName(name) {
@@ -490,6 +543,12 @@
         } else {
           player1Name = player1Select.value;
           player2Name = player2Select.value;
+          
+          // Sprawdź czy nie wybrano tej samej osoby
+          if (player1Name === player2Name) {
+            tictactoeMessage.textContent = 'Wybierz różnych graczy!';
+            return;
+          }
         }
         
         if (!player1Name || !player2Name) {
@@ -573,7 +632,6 @@
       }
 
       function handleCellClick(index) {
-        // BLOKADA podczas ruchu komputera lub gry nieaktywnej
         if (!gameActive || gameBoard[index] !== '' || isComputerThinking) {
           return;
         }
@@ -607,11 +665,11 @@
         // Zmiana gracza
         currentPlayer = (currentPlayer === player1) ? player2 : player1;
         
-        // Jeśli to komputer, wykonaj jego ruch (BLOKADA żeby gracz nie mógł kliknąć)
+        // Jeśli to komputer, wykonaj jego ruch
         if (gameMode === 'computer' && currentPlayer.name === 'Komputer') {
           isComputerThinking = true;
           tictactoeMessage.textContent = 'Komputer myśli...';
-          setTimeout(computerMove, 500); // SZYBCIEJ - 0.5 sekundy
+          setTimeout(computerMove, 500);
         } else {
           tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
           updatePlayerCards();
@@ -628,7 +686,6 @@
           gameBoard[randomIndex] = 'player2';
           renderBoard();
 
-          // Sprawdź czy komputer wygrał
           if (checkWinner()) {
             const loseText = getGenderEnding(player1, 'lose');
             tictactoeMessage.innerHTML = `💀 <strong>${player1.name} ${loseText}! Komputer wygrał! 💀</strong>`;
@@ -637,7 +694,6 @@
             return;
           }
 
-          // Sprawdź remis
           if (isBoardFull()) {
             tictactoeMessage.textContent = 'Remis! Nikt nie wygrał 50 euro!';
             gameActive = false;
@@ -645,13 +701,12 @@
             return;
           }
 
-          // Zmiana na gracza
           currentPlayer = player1;
           tictactoeMessage.textContent = `Twój ruch ${player1.name}!`;
           updatePlayerCards();
         }
         
-        isComputerThinking = false; // OD-BLOKADA
+        isComputerThinking = false;
       }
 
       function checkWinner() {
@@ -670,7 +725,11 @@
 
       startTicTacToeBtn.addEventListener('click', startTicTacToe);
 
-      // Inicjalizacja - wypełnij selecty na start
+      // Nasłuchuj zmiany w selectach dla automatycznej aktualizacji
+      player1Select.addEventListener('change', updatePlayerSelects);
+      player2Select.addEventListener('change', updatePlayerSelects);
+
+      // Inicjalizacja
       populatePlayerSelects();
     </script>
   </div>
