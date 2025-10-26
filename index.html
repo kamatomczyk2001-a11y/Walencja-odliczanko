@@ -219,6 +219,33 @@
       padding: 10px;
       border-radius: 10px;
       border: 1px solid #ffde59;
+      min-width: 120px;
+    }
+
+    .player-card.active {
+      background: rgba(255, 140, 0, 0.3);
+      border: 2px solid #ff8c00;
+    }
+
+    .game-mode {
+      margin: 15px 0;
+    }
+
+    .player-select {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    select {
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #ffde59;
+      background: rgba(255, 222, 89, 0.9);
+      color: #333;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -231,13 +258,30 @@
     <button onclick="showFact()">🎓 Pokaż ciekawostkę</button>
 
     <div id="tictactoeContainer">
-      <button id="startTicTacToe">🎮 Start Kółko i Krzyżyk</button>
+      <div class="game-mode">
+        <strong>Wybierz tryb gry:</strong><br>
+        <button onclick="setGameMode('human')">👥 2 Graczy</button>
+        <button onclick="setGameMode('computer')">🤖 vs Komputer</button>
+      </div>
+
+      <div id="playerSelection" style="display: none;">
+        <div class="player-select">
+          <select id="player1Select">
+            <option value="">Wybierz gracza 1</option>
+          </select>
+          <select id="player2Select">
+            <option value="">Wybierz gracza 2</option>
+          </select>
+        </div>
+        <button id="startTicTacToe">🎮 Start Gry</button>
+      </div>
+
       <div id="currentPlayers"></div>
       <div class="player-info">
         <div class="player-card" id="player1Info"></div>
         <div class="player-card" id="player2Info"></div>
       </div>
-      <div id="tictactoeMessage">Kliknij START aby zagrać!</div>
+      <div id="tictactoeMessage">Wybierz tryb gry!</div>
       <div id="tictactoeBoard"></div>
     </div>
 
@@ -323,7 +367,7 @@
         setTimeout(() => sangria.remove(), 5000);
       }, 8000);
 
-      // NOWA FUNKCJONALNOŚĆ - 2 GRACZY (HUMAN vs HUMAN)
+      // GRACZE + KOMPUTER
       const players = [
         { name: 'Kamilka', gender: 'female', image: 'kamilka.jpg' },
         { name: 'Ola', gender: 'female', image: 'ola.jpg' },
@@ -335,13 +379,19 @@
         { name: 'Kacperek', gender: 'male', image: 'kacperek.jpg' }
       ];
 
+      const computerPlayer = { name: 'Komputer', gender: 'male', image: 'usmiech.jpg' };
+
       const tictactoeBoard = document.getElementById('tictactoeBoard');
       const tictactoeMessage = document.getElementById('tictactoeMessage');
       const currentPlayersEl = document.getElementById('currentPlayers');
       const player1InfoEl = document.getElementById('player1Info');
       const player2InfoEl = document.getElementById('player2Info');
       const startTicTacToeBtn = document.getElementById('startTicTacToe');
+      const playerSelectionDiv = document.getElementById('playerSelection');
+      const player1Select = document.getElementById('player1Select');
+      const player2Select = document.getElementById('player2Select');
 
+      let gameMode = null;
       let player1 = null;
       let player2 = null;
       let currentPlayer = null;
@@ -354,8 +404,32 @@
         [0, 4, 8], [2, 4, 6]
       ];
 
-      function getRandomPlayer() {
-        return players[Math.floor(Math.random() * players.length)];
+      // Wypełnij selecty graczami
+      function populatePlayerSelects() {
+        players.forEach(player => {
+          const option1 = new Option(player.name, player.name);
+          const option2 = new Option(player.name, player.name);
+          player1Select.add(option1);
+          player2Select.add(option2);
+        });
+      }
+
+      function setGameMode(mode) {
+        gameMode = mode;
+        playerSelectionDiv.style.display = 'block';
+        
+        if (mode === 'computer') {
+          player2Select.innerHTML = '<option value="computer">Komputer</option>';
+          tictactoeMessage.textContent = 'Wybierz gracza i zacznij grę z komputerem!';
+        } else {
+          populatePlayerSelects();
+          tictactoeMessage.textContent = 'Wybierz dwóch graczy i zacznij grę!';
+        }
+      }
+
+      function getPlayerByName(name) {
+        if (name === 'computer') return computerPlayer;
+        return players.find(player => player.name === name);
       }
 
       function getGenderEnding(player, action) {
@@ -367,14 +441,16 @@
       }
 
       function startTicTacToe() {
-        // Losowanie 2 różnych graczy
-        player1 = getRandomPlayer();
-        player2 = getRandomPlayer();
+        const player1Name = player1Select.value;
+        const player2Name = player2Select.value;
         
-        // Upewnij się że to nie ta sama osoba
-        while (player2.name === player1.name) {
-          player2 = getRandomPlayer();
+        if (!player1Name || !player2Name) {
+          tictactoeMessage.textContent = 'Wybierz obu graczy!';
+          return;
         }
+
+        player1 = getPlayerByName(player1Name);
+        player2 = getPlayerByName(player2Name);
 
         // Gracz 1 zaczyna
         currentPlayer = player1;
@@ -384,12 +460,28 @@
         
         // Pokaz kto gra
         currentPlayersEl.innerHTML = `🎮 <strong>${player1.name}</strong> vs <strong>${player2.name}</strong>`;
-        player1InfoEl.innerHTML = `🔴 ${player1.name}<br><small>Zaczyna grę</small>`;
-        player2InfoEl.innerHTML = `🔵 ${player2.name}`;
         
         tictactoeMessage.textContent = `${player1.name} zaczyna grę!`;
         
+        updatePlayerCards();
         renderBoard();
+      }
+
+      function updatePlayerCards() {
+        player1InfoEl.innerHTML = `🔴 ${player1.name}`;
+        player2InfoEl.innerHTML = `🔵 ${player2.name}`;
+        
+        // Podświetl aktywnego gracza
+        player1InfoEl.classList.remove('active');
+        player2InfoEl.classList.remove('active');
+        
+        if (currentPlayer === player1) {
+          player1InfoEl.classList.add('active');
+          player1InfoEl.innerHTML += `<br><small><strong>TWOJA TURA</strong></small>`;
+        } else {
+          player2InfoEl.classList.add('active');
+          player2InfoEl.innerHTML += `<br><small><strong>TWOJA TURA</strong></small>`;
+        }
       }
 
       function renderBoard() {
@@ -401,40 +493,33 @@
           
           if (gameBoard[i] === 'player1') {
             const img = document.createElement('img');
-            // UŻYWAMY BEZPOŚREDNICH LINKÓW DO ZDJĘĆ NA GITHUB
             img.src = getImageUrl(player1.image);
             img.className = 'cell-image';
             img.alt = player1.name;
+            img.onerror = function() {
+              this.src = 'https://via.placeholder.com/100/ffde59/000000?text=' + player1.name.charAt(0);
+            };
             cell.appendChild(img);
           } else if (gameBoard[i] === 'player2') {
             const img = document.createElement('img');
             img.src = getImageUrl(player2.image);
             img.className = 'cell-image';
             img.alt = player2.name;
+            img.onerror = function() {
+              this.src = 'https://via.placeholder.com/100/ff8c00/ffffff?text=' + player2.name.charAt(0);
+            };
             cell.appendChild(img);
           }
           
           cell.addEventListener('click', () => handleCellClick(i));
           tictactoeBoard.appendChild(cell);
         }
-
-        // Aktualizuj informacje o graczach
-        if (currentPlayer === player1) {
-          player1InfoEl.innerHTML = `🔴 ${player1.name}<br><small><strong>TWOJA TURA</strong></small>`;
-          player2InfoEl.innerHTML = `🔵 ${player2.name}`;
-        } else {
-          player1InfoEl.innerHTML = `🔴 ${player1.name}`;
-          player2InfoEl.innerHTML = `🔵 ${player2.name}<br><small><strong>TWOJA TURA</strong></small>`;
-        }
       }
 
       // FUNKCJA DO POBRANIA URL ZDJĘCIA Z GITHUB
       function getImageUrl(imageName) {
-        // Pobierz URL aktualnej strony
         const baseUrl = window.location.href;
-        // Usuń 'index.html' z końca jeśli istnieje
         const repoUrl = baseUrl.split('/').slice(0, -1).join('/');
-        // Zwróć pełny URL do zdjęcia
         return `${repoUrl}/${imageName}`;
       }
 
@@ -443,7 +528,7 @@
           return;
         }
 
-        // Ustaw ruch aktualnego gracza
+        // Ruch gracza
         if (currentPlayer === player1) {
           gameBoard[index] = 'player1';
         } else {
@@ -471,7 +556,45 @@
 
         // Zmiana gracza
         currentPlayer = (currentPlayer === player1) ? player2 : player1;
-        tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
+        
+        // Jeśli to komputer, wykonaj jego ruch
+        if (gameMode === 'computer' && currentPlayer.name === 'Komputer') {
+          tictactoeMessage.textContent = 'Komputer myśli...';
+          setTimeout(computerMove, 1000);
+        } else {
+          tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
+          updatePlayerCards();
+        }
+      }
+
+      function computerMove() {
+        if (!gameActive) return;
+        
+        const emptyCells = gameBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        
+        gameBoard[randomIndex] = 'player2';
+        renderBoard();
+
+        // Sprawdź czy komputer wygrał
+        if (checkWinner()) {
+          const loseText = getGenderEnding(player1, 'lose');
+          tictactoeMessage.innerHTML = `💀 <strong>${player1.name} ${loseText}! Komputer wygrał! 💀</strong>`;
+          gameActive = false;
+          return;
+        }
+
+        // Sprawdź remis
+        if (isBoardFull()) {
+          tictactoeMessage.textContent = 'Remis! Nikt nie wygrał 50 euro!';
+          gameActive = false;
+          return;
+        }
+
+        // Zmiana na gracza
+        currentPlayer = player1;
+        tictactoeMessage.textContent = `Twój ruch ${player1.name}!`;
+        updatePlayerCards();
       }
 
       function checkWinner() {
@@ -490,6 +613,16 @@
 
       startTicTacToeBtn.addEventListener('click', startTicTacToe);
       renderBoard();
+
+      // DODAJ ZASTĘPCZE ZDJĘCIA GDY ORGINAŁ SIĘ NIE WCZYTA
+      function addImageFallbacks() {
+        const images = document.querySelectorAll('.cell-image');
+        images.forEach(img => {
+          img.onerror = function() {
+            this.src = 'https://via.placeholder.com/100/667eea/ffffff?text=?';
+          };
+        });
+      }
     </script>
   </div>
 </body>
