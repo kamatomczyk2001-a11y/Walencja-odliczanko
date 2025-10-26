@@ -253,6 +253,18 @@
       font-weight: bold;
       margin: 10px 0;
     }
+
+    .coin-flip {
+      font-size: 2em;
+      margin: 10px 0;
+      animation: flip 1s ease-in-out;
+    }
+
+    @keyframes flip {
+      0% { transform: rotateY(0deg); }
+      50% { transform: rotateY(180deg); }
+      100% { transform: rotateY(360deg); }
+    }
   </style>
 </head>
 <body>
@@ -295,6 +307,7 @@
       </div>
 
       <div id="currentPlayers"></div>
+      <div id="coinFlipMessage"></div>
       <div class="player-info">
         <div class="player-card" id="player1Info"></div>
         <div class="player-card" id="player2Info"></div>
@@ -402,6 +415,7 @@
       const tictactoeBoard = document.getElementById('tictactoeBoard');
       const tictactoeMessage = document.getElementById('tictactoeMessage');
       const currentPlayersEl = document.getElementById('currentPlayers');
+      const coinFlipMessageEl = document.getElementById('coinFlipMessage');
       const player1InfoEl = document.getElementById('player1Info');
       const player2InfoEl = document.getElementById('player2Info');
       const startTicTacToeBtn = document.getElementById('startTicTacToe');
@@ -516,6 +530,7 @@
         player1InfoEl.classList.remove('active');
         player2InfoEl.classList.remove('active');
         currentPlayersEl.innerHTML = '';
+        coinFlipMessageEl.innerHTML = '';
         
         // Wyczyść komunikaty
         tictactoeMessage.textContent = 'Wybierz graczy i zacznij grę!';
@@ -532,6 +547,12 @@
         } else {
           return action === 'win' ? 'wygrał' : 'przegrał';
         }
+      }
+
+      // NOWA FUNKCJA - LOSOWANIE KTO ZACZYNA
+      function determineFirstPlayer() {
+        const coinFlip = Math.random() < 0.5; // 50% szans
+        return coinFlip ? player1 : player2;
       }
 
       function startTicTacToe() {
@@ -559,9 +580,6 @@
         player1 = getPlayerByName(player1Name);
         player2 = getPlayerByName(player2Name);
 
-        // Gracz 1 zawsze zaczyna
-        currentPlayer = player1;
-
         gameBoard = ['', '', '', '', '', '', '', '', ''];
         gameActive = true;
         isComputerThinking = false;
@@ -569,10 +587,24 @@
         // Pokaz kto gra
         currentPlayersEl.innerHTML = `🎮 <strong>${player1.name}</strong> vs <strong>${player2.name}</strong>`;
         
-        tictactoeMessage.textContent = `${player1.name} zaczyna grę!`;
+        // LOSOWANIE KTO ZACZYNA
+        currentPlayer = determineFirstPlayer();
         
-        updatePlayerCards();
-        renderBoard();
+        // Animacja rzutu monetą
+        coinFlipMessageEl.innerHTML = `<div class="coin-flip">🪙</div>Losowanie kto zaczyna...`;
+        
+        setTimeout(() => {
+          coinFlipMessageEl.innerHTML = `<strong>${currentPlayer.name} zaczyna grę!</strong>`;
+          tictactoeMessage.textContent = `${currentPlayer.name} zaczyna grę!`;
+          updatePlayerCards();
+          renderBoard();
+          
+          // Jeśli komputer zaczyna, wykonaj jego ruch
+          if (gameMode === 'computer' && currentPlayer.name === 'Komputer') {
+            isComputerThinking = true;
+            setTimeout(computerMove, 1000);
+          }
+        }, 1500);
       }
 
       function updatePlayerCards() {
