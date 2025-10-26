@@ -4,24 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ROZPIERDOL W WALENCJI 🌞🍊</title>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-
-  <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBuAItM0qA6D_MkrK7dxgEmOzQVMjtz7J4",
-  authDomain: "kreta-2208b.firebaseapp.com",
-  databaseURL: "https://kreta-2208b-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "kreta-2208b",
-  storageBucket: "kreta-2208b.firebasestorage.app",
-  messagingSenderId: "644829928706",
-  appId: "1:644829928706:web:1e8b43d96d152b6837f61b",
-  measurementId: "G-77YZPTBL43"
-};
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
   
   <style>
     html, body {
@@ -224,6 +206,20 @@ const firebaseConfig = {
       margin: 10px 0;
       color: #ffde59;
     }
+
+    .player-info {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 15px 0;
+    }
+
+    .player-card {
+      background: rgba(255, 222, 89, 0.2);
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ffde59;
+    }
   </style>
 </head>
 <body>
@@ -237,6 +233,10 @@ const firebaseConfig = {
     <div id="tictactoeContainer">
       <button id="startTicTacToe">🎮 Start Kółko i Krzyżyk</button>
       <div id="currentPlayers"></div>
+      <div class="player-info">
+        <div class="player-card" id="player1Info"></div>
+        <div class="player-card" id="player2Info"></div>
+      </div>
       <div id="tictactoeMessage">Kliknij START aby zagrać!</div>
       <div id="tictactoeBoard"></div>
     </div>
@@ -323,7 +323,7 @@ const firebaseConfig = {
         setTimeout(() => sangria.remove(), 5000);
       }, 8000);
 
-      // NOWA FUNKCJONALNOŚĆ - 8 GRACZY
+      // NOWA FUNKCJONALNOŚĆ - 2 GRACZY (HUMAN vs HUMAN)
       const players = [
         { name: 'Kamilka', gender: 'female', image: 'kamilka.jpg' },
         { name: 'Ola', gender: 'female', image: 'ola.jpg' },
@@ -338,15 +338,15 @@ const firebaseConfig = {
       const tictactoeBoard = document.getElementById('tictactoeBoard');
       const tictactoeMessage = document.getElementById('tictactoeMessage');
       const currentPlayersEl = document.getElementById('currentPlayers');
+      const player1InfoEl = document.getElementById('player1Info');
+      const player2InfoEl = document.getElementById('player2Info');
       const startTicTacToeBtn = document.getElementById('startTicTacToe');
 
+      let player1 = null;
+      let player2 = null;
       let currentPlayer = null;
-      let currentOpponent = null;
       let gameBoard = ['', '', '', '', '', '', '', '', ''];
       let gameActive = false;
-      let gameCounter = 0;
-
-      const computerImage = 'https://i.ibb.co/JFmT4P74/piwo.jpg';
 
       const winningConditions = [
         [0, 1, 2], [3, 4, 5], [6, 7, 8],
@@ -367,51 +367,29 @@ const firebaseConfig = {
       }
 
       function startTicTacToe() {
-        // Losowanie gracza i przeciwnika
-        currentPlayer = getRandomPlayer();
-        currentOpponent = getRandomPlayer();
+        // Losowanie 2 różnych graczy
+        player1 = getRandomPlayer();
+        player2 = getRandomPlayer();
         
         // Upewnij się że to nie ta sama osoba
-        while (currentOpponent.name === currentPlayer.name) {
-          currentOpponent = getRandomPlayer();
+        while (player2.name === player1.name) {
+          player2 = getRandomPlayer();
         }
+
+        // Gracz 1 zaczyna
+        currentPlayer = player1;
 
         gameBoard = ['', '', '', '', '', '', '', '', ''];
         gameActive = true;
-        gameCounter++;
         
         // Pokaz kto gra
-        currentPlayersEl.innerHTML = `🎮 <strong>${currentPlayer.name}</strong> vs <strong>${currentOpponent.name}</strong>`;
+        currentPlayersEl.innerHTML = `🎮 <strong>${player1.name}</strong> vs <strong>${player2.name}</strong>`;
+        player1InfoEl.innerHTML = `🔴 ${player1.name}<br><small>Zaczyna grę</small>`;
+        player2InfoEl.innerHTML = `🔵 ${player2.name}`;
         
-        // PIERWSZA GRA - Gracz zaczyna, POTEM NA ZMIANĘ
-        if (gameCounter === 1) {
-          currentTurn = 'player';
-          tictactoeMessage.textContent = `${currentPlayer.name} zaczyna pierwszą grę!`;
-        } else {
-          if (gameCounter % 2 === 0) {
-            currentTurn = 'opponent';
-            tictactoeMessage.textContent = `${currentOpponent.name} zaczyna! Czekaj...`;
-            setTimeout(opponentFirstMove, 1000);
-          } else {
-            currentTurn = 'player';
-            tictactoeMessage.textContent = `${currentPlayer.name} zaczyna!`;
-          }
-        }
+        tictactoeMessage.textContent = `${player1.name} zaczyna grę!`;
         
         renderBoard();
-      }
-
-      function opponentFirstMove() {
-        if (!gameActive) return;
-        
-        const emptyCells = gameBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
-        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-        
-        gameBoard[randomIndex] = 'opponent';
-        renderBoard();
-        
-        currentTurn = 'player';
-        tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
       }
 
       function renderBoard() {
@@ -421,75 +399,79 @@ const firebaseConfig = {
           cell.className = 'tictactoe-cell';
           cell.dataset.index = i;
           
-          if (gameBoard[i] === 'player') {
+          if (gameBoard[i] === 'player1') {
             const img = document.createElement('img');
-            img.src = currentPlayer.image;
+            // UŻYWAMY BEZPOŚREDNICH LINKÓW DO ZDJĘĆ NA GITHUB
+            img.src = getImageUrl(player1.image);
             img.className = 'cell-image';
-            img.alt = currentPlayer.name;
+            img.alt = player1.name;
             cell.appendChild(img);
-          } else if (gameBoard[i] === 'opponent') {
+          } else if (gameBoard[i] === 'player2') {
             const img = document.createElement('img');
-            img.src = currentOpponent.image;
+            img.src = getImageUrl(player2.image);
             img.className = 'cell-image';
-            img.alt = currentOpponent.name;
+            img.alt = player2.name;
             cell.appendChild(img);
           }
           
           cell.addEventListener('click', () => handleCellClick(i));
           tictactoeBoard.appendChild(cell);
         }
+
+        // Aktualizuj informacje o graczach
+        if (currentPlayer === player1) {
+          player1InfoEl.innerHTML = `🔴 ${player1.name}<br><small><strong>TWOJA TURA</strong></small>`;
+          player2InfoEl.innerHTML = `🔵 ${player2.name}`;
+        } else {
+          player1InfoEl.innerHTML = `🔴 ${player1.name}`;
+          player2InfoEl.innerHTML = `🔵 ${player2.name}<br><small><strong>TWOJA TURA</strong></small>`;
+        }
+      }
+
+      // FUNKCJA DO POBRANIA URL ZDJĘCIA Z GITHUB
+      function getImageUrl(imageName) {
+        // Pobierz URL aktualnej strony
+        const baseUrl = window.location.href;
+        // Usuń 'index.html' z końca jeśli istnieje
+        const repoUrl = baseUrl.split('/').slice(0, -1).join('/');
+        // Zwróć pełny URL do zdjęcia
+        return `${repoUrl}/${imageName}`;
       }
 
       function handleCellClick(index) {
-        if (!gameActive || gameBoard[index] !== '' || currentTurn !== 'player') {
+        if (!gameActive || gameBoard[index] !== '') {
           return;
         }
 
-        gameBoard[index] = 'player';
+        // Ustaw ruch aktualnego gracza
+        if (currentPlayer === player1) {
+          gameBoard[index] = 'player1';
+        } else {
+          gameBoard[index] = 'player2';
+        }
+
         renderBoard();
 
+        // Sprawdź czy ktoś wygrał
         if (checkWinner()) {
-          const winText = getGenderEnding(currentPlayer, 'win');
-          tictactoeMessage.innerHTML = `🎉 <strong>${currentPlayer.name} ${winText}! Pysio wisi mi 50 euro! 🎉</strong>`;
+          const winner = currentPlayer;
+          const winText = getGenderEnding(winner, 'win');
+          tictactoeMessage.innerHTML = `🎉 <strong>${winner.name} ${winText}! Pysio wisi mi 50 euro! 🎉</strong>`;
           gameActive = false;
           triggerExplosion();
           return;
         }
 
+        // Sprawdź remis
         if (isBoardFull()) {
-          tictactoeMessage.textContent = 'Remis! Spróbuj jeszcze raz.';
+          tictactoeMessage.textContent = 'Remis! Nikt nie wygrał 50 euro!';
           gameActive = false;
           return;
         }
 
-        currentTurn = 'opponent';
-        tictactoeMessage.textContent = `Ruch ${currentOpponent.name}...`;
-        
-        setTimeout(() => {
-          if (!gameActive) return;
-          
-          const emptyCells = gameBoard.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
-          const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-          
-          gameBoard[randomIndex] = 'opponent';
-          renderBoard();
-
-          if (checkWinner()) {
-            const loseText = getGenderEnding(currentPlayer, 'lose');
-            tictactoeMessage.innerHTML = `💀 <strong>${currentPlayer.name} ${loseText}! ${currentOpponent.name} wygrał! 💀</strong>`;
-            gameActive = false;
-            return;
-          }
-
-          if (isBoardFull()) {
-            tictactoeMessage.textContent = 'Remis! Spróbuj jeszcze raz.';
-            gameActive = false;
-            return;
-          }
-
-          currentTurn = 'player';
-          tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
-        }, 1000);
+        // Zmiana gracza
+        currentPlayer = (currentPlayer === player1) ? player2 : player1;
+        tictactoeMessage.textContent = `Ruch ${currentPlayer.name}!`;
       }
 
       function checkWinner() {
